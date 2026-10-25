@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../widgets/custom_button.dart';
-import 'login_screen.dart';
+import '../services/preferences_service.dart';
 
 /// Profile Screen: Displays detailed student academic record, contact details, and logout flow.
 class ProfileScreen extends StatelessWidget {
@@ -19,7 +19,7 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         content: const Text(
-          'Are you sure you want to log out of the Smart Student Companion App?',
+          'Are you sure you want to log out of the Smart Student Companion App? Your persistent session will be cleared from SharedPreferences.',
         ),
         actions: [
           TextButton(
@@ -27,16 +27,22 @@ class ProfileScreen extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () {
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
+              await PreferencesService.logout();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              }
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: const Text('Logout'),
           ),
         ],
       ),

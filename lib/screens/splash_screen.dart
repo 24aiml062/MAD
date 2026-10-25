@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import '../services/preferences_service.dart';
 
-/// Splash Screen: Initial animated screen with university branding and auto-navigation.
+/// Splash Screen: Initial animated screen with university branding and auto-session navigation.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,16 +16,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate automatically to LoginScreen after 2.5 seconds
-    _timer = Timer(const Duration(milliseconds: 2500), _navigateToLogin);
+    // Navigate automatically based on persistent session state
+    _timer = Timer(
+      const Duration(milliseconds: 2000),
+      _checkSessionAndNavigate,
+    );
   }
 
-  void _navigateToLogin() {
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+  Future<void> _checkSessionAndNavigate() async {
+    _timer?.cancel();
+    await PreferencesService.init();
+    if (!mounted) return;
+    if (PreferencesService.isLoggedIn) {
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -43,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: InkWell(
-          onTap: _navigateToLogin, // Allow tapping to skip immediately
+          onTap: _checkSessionAndNavigate, // Allow tapping to skip immediately
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),

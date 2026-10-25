@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/settings_state.dart';
+import '../services/preferences_service.dart';
+import '../widgets/app_drawer.dart';
 
 /// Settings & Preferences Screen: Implements interactive state management using setState()
-/// featuring Checkbox, Radio Button, Switch, DropdownButton, and Slider widgets.
+/// featuring Checkbox, Radio Button, Switch, DropdownButton, and Slider widgets,
+/// integrated with persistent SharedPreferences storage.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -11,7 +14,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Ephemeral State variables managed by setState()
+  // Ephemeral State variables managed by setState() and backed by SharedPreferences
   late StudentSettingsState _state;
 
   final List<String> _semesters = [
@@ -35,13 +38,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _state = StudentSettingsState(isDarkMode: AppThemeState.isDarkMode);
+    _state = PreferencesService.loadSettings();
+    _state.isDarkMode = AppThemeState.isDarkMode;
   }
 
-  void _savePreferences() {
-    // Synchronize global theme
+  Future<void> _savePreferences() async {
+    // Synchronize global theme and persist to SharedPreferences
     AppThemeState.toggleTheme(_state.isDarkMode);
+    await PreferencesService.saveSettings(_state);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -50,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Settings updated successfully for ${_state.studentName} (${_state.semester})!',
+                'Preferences saved to persistent SharedPreferences for ${_state.studentName} (${_state.semester})!',
               ),
             ),
           ],
@@ -61,12 +67,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _resetDefaults() {
+  Future<void> _resetDefaults() async {
     setState(() {
       _state = StudentSettingsState(isDarkMode: false);
       AppThemeState.toggleTheme(false);
     });
+    await PreferencesService.saveSettings(_state);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Preferences reset to default values.'),
@@ -82,8 +90,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : Colors.grey.shade100,
+      drawer: const AppDrawer(currentRoute: '/settings'),
       appBar: AppBar(
-        title: const Text('Settings & Preferences', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Settings & Preferences',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         actions: [
@@ -114,7 +126,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: SwitchListTile(
                 title: Text(
                   isDark ? 'Dark Theme (Enabled)' : 'Light Theme (Active)',
@@ -142,11 +156,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 16),
 
             // 3. Semester Selection (DropdownButton)
-            _buildSectionHeader('Academic Semester Selection', Icons.school_outlined),
+            _buildSectionHeader(
+              'Academic Semester Selection',
+              Icons.school_outlined,
+            ),
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -154,18 +173,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     const Text(
                       'Choose Current Semester',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _state.semester,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: Icon(Icons.calendar_month, color: theme.primaryColor),
+                        fillColor: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.calendar_month,
+                          color: theme.primaryColor,
+                        ),
                       ),
-                      dropdownColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                      dropdownColor: isDark
+                          ? const Color(0xFF2A2A2A)
+                          : Colors.white,
                       items: _semesters.map((sem) {
                         return DropdownMenuItem<String>(
                           value: sem,
@@ -191,7 +222,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: RadioGroup<String>(
                 groupValue: _state.language,
                 onChanged: (val) {
@@ -201,19 +234,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     RadioListTile<String>(
                       title: Text('English (Default)'),
-                      subtitle: Text('Primary language for course curriculum and exams', style: TextStyle(fontSize: 11)),
+                      subtitle: Text(
+                        'Primary language for course curriculum and exams',
+                        style: TextStyle(fontSize: 11),
+                      ),
                       value: 'English',
                     ),
                     Divider(height: 1),
                     RadioListTile<String>(
                       title: Text('Hindi (हिन्दी)'),
-                      subtitle: Text('Hindi academic notifications and guidelines', style: TextStyle(fontSize: 11)),
+                      subtitle: Text(
+                        'Hindi academic notifications and guidelines',
+                        style: TextStyle(fontSize: 11),
+                      ),
                       value: 'Hindi',
                     ),
                     Divider(height: 1),
                     RadioListTile<String>(
                       title: Text('Gujarati (ગુજરાતી)'),
-                      subtitle: Text('Regional language notifications and announcements', style: TextStyle(fontSize: 11)),
+                      subtitle: Text(
+                        'Regional language notifications and announcements',
+                        style: TextStyle(fontSize: 11),
+                      ),
                       value: 'Gujarati',
                     ),
                   ],
@@ -223,16 +265,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 16),
 
             // 5. Notification Preferences (Checkboxes)
-            _buildSectionHeader('Notification Preferences', Icons.notifications_active_outlined),
+            _buildSectionHeader(
+              'Notification Preferences',
+              Icons.notifications_active_outlined,
+            ),
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Column(
                 children: [
                   CheckboxListTile(
                     title: const Text('Assignment Alerts'),
-                    subtitle: const Text('Receive submission deadline reminders and grading notices', style: TextStyle(fontSize: 11)),
+                    subtitle: const Text(
+                      'Receive submission deadline reminders and grading notices',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     value: _state.assignmentAlerts,
                     activeColor: theme.primaryColor,
                     onChanged: (val) {
@@ -242,7 +292,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                   CheckboxListTile(
                     title: const Text('Examination Notifications'),
-                    subtitle: const Text('Timetable alerts, seat allocations, and result declarations', style: TextStyle(fontSize: 11)),
+                    subtitle: const Text(
+                      'Timetable alerts, seat allocations, and result declarations',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     value: _state.examNotifications,
                     activeColor: theme.primaryColor,
                     onChanged: (val) {
@@ -252,7 +305,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                   CheckboxListTile(
                     title: const Text('Placement Updates'),
-                    subtitle: const Text('Campus drive announcements and internship interview alerts', style: TextStyle(fontSize: 11)),
+                    subtitle: const Text(
+                      'Campus drive announcements and internship interview alerts',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     value: _state.placementUpdates,
                     activeColor: theme.primaryColor,
                     onChanged: (val) {
@@ -262,7 +318,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                   CheckboxListTile(
                     title: const Text('Event Announcements'),
-                    subtitle: const Text('Hackathons, tech fests, workshops, and cultural fests', style: TextStyle(fontSize: 11)),
+                    subtitle: const Text(
+                      'Hackathons, tech fests, workshops, and cultural fests',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     value: _state.eventAnnouncements,
                     activeColor: theme.primaryColor,
                     onChanged: (val) {
@@ -275,11 +334,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 16),
 
             // 6. Daily Study Goal Target (Slider)
-            _buildSectionHeader('Daily Study Target Goal', Icons.timer_outlined),
+            _buildSectionHeader(
+              'Daily Study Target Goal',
+              Icons.timer_outlined,
+            ),
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -288,9 +352,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Target Daily Study Hours:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Target Daily Study Hours:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: theme.primaryColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
@@ -313,7 +383,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       max: 8.0,
                       divisions: 14,
                       activeColor: theme.primaryColor,
-                      label: '${_state.dailyStudyGoalHours.toStringAsFixed(1)} hrs',
+                      label:
+                          '${_state.dailyStudyGoalHours.toStringAsFixed(1)} hrs',
                       onChanged: (double newVal) {
                         setState(() {
                           _state.dailyStudyGoalHours = newVal;
@@ -323,9 +394,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('1.0 hr (Light)', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                        Text('4.5 hrs (Standard)', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                        Text('8.0 hrs (Intensive)', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                        Text(
+                          '1.0 hr (Light)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          '4.5 hrs (Standard)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          '8.0 hrs (Intensive)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -335,11 +424,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 16),
 
             // 7. Course Preferences (Filter Chips)
-            _buildSectionHeader('Course Preferences & Enrolment', Icons.menu_book),
+            _buildSectionHeader(
+              'Course Preferences & Enrolment',
+              Icons.menu_book,
+            ),
             Card(
               elevation: 2,
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -347,23 +441,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'Tap to select preferred subjects to highlight on the dashboard:',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _allCourses.map((course) {
-                        final isSelected = _state.selectedCourses.contains(course);
+                        final isSelected = _state.selectedCourses.contains(
+                          course,
+                        );
                         return FilterChip(
                           label: Text(course),
                           selected: isSelected,
-                          selectedColor: theme.primaryColor.withValues(alpha: 0.2),
+                          selectedColor: theme.primaryColor.withValues(
+                            alpha: 0.2,
+                          ),
                           checkmarkColor: theme.primaryColor,
                           labelStyle: TextStyle(
                             fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? theme.primaryColor : (isDark ? Colors.white70 : Colors.black87),
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? theme.primaryColor
+                                : (isDark ? Colors.white70 : Colors.black87),
                           ),
                           onSelected: (bool selected) {
                             setState(() {
@@ -395,7 +500,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: const Text('Reset'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -405,11 +512,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: ElevatedButton.icon(
                     onPressed: _savePreferences,
                     icon: const Icon(Icons.check, color: Colors.white),
-                    label: const Text('Save Preferences', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Save Preferences',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.primaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -468,14 +583,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     isDark ? 'Dark Mode' : 'Light Mode',
-                    style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -486,7 +608,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _buildLiveParam('Semester', _state.semester),
                 _buildLiveParam('Language', _state.language),
-                _buildLiveParam('Study Target', '${_state.dailyStudyGoalHours.toStringAsFixed(1)}h'),
+                _buildLiveParam(
+                  'Study Target',
+                  '${_state.dailyStudyGoalHours.toStringAsFixed(1)}h',
+                ),
                 _buildLiveParam('Notifs', '$activeNotifs Active'),
               ],
             ),
@@ -505,9 +630,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white60)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Colors.white60),
+        ),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ],
     );
   }
@@ -521,10 +656,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
       ),

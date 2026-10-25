@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/settings_state.dart';
+import 'services/preferences_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
@@ -13,15 +14,20 @@ import 'screens/faculty_screen.dart';
 import 'screens/event_gallery_screen.dart';
 import 'screens/settings_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PreferencesService.init();
+
   final darkParam = Uri.base.queryParameters['dark'] == 'true';
-  if (darkParam) {
+  final savedDark = PreferencesService.getSavedThemeMode();
+  if (darkParam || savedDark) {
     AppThemeState.toggleTheme(true);
   }
   runApp(const SmartStudentCompanionApp());
 }
 
-/// Root widget of the Smart Student Companion App with dynamic theme state management.
+/// Root widget of the Smart Student Companion App with dynamic theme state management,
+/// named routing, and smooth custom page transitions.
 class SmartStudentCompanionApp extends StatelessWidget {
   const SmartStudentCompanionApp({super.key});
 
@@ -55,6 +61,76 @@ class SmartStudentCompanionApp extends StatelessWidget {
     }
   }
 
+  /// Custom animated page route builder providing smooth slide and fade transitions.
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    Widget page;
+    switch (settings.name) {
+      case '/splash':
+        page = const SplashScreen();
+        break;
+      case '/login':
+        page = const LoginScreen();
+        break;
+      case '/register':
+        page = const RegistrationScreen();
+        break;
+      case '/dashboard':
+        page = const DashboardScreen();
+        break;
+      case '/profile':
+        page = const ProfileScreen();
+        break;
+      case '/attendance':
+        page = const AttendanceScreen();
+        break;
+      case '/timetable':
+        page = const TimetableScreen();
+        break;
+      case '/assignments':
+        page = const AssignmentsScreen();
+        break;
+      case '/notifications':
+        page = const NotificationsScreen();
+        break;
+      case '/faculty':
+        page = const FacultyScreen();
+        break;
+      case '/events':
+        page = const EventGalleryScreen();
+        break;
+      case '/settings':
+        page = const SettingsScreen();
+        break;
+      default:
+        page = const SplashScreen();
+    }
+
+    return PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.05, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOutCubic;
+        final tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+        final offsetAnimation = animation.drive(tween);
+        final fadeAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeIn,
+        );
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: FadeTransition(opacity: fadeAnimation, child: child),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 250),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -75,10 +151,7 @@ class SmartStudentCompanionApp extends StatelessWidget {
             ),
             useMaterial3: true,
             scaffoldBackgroundColor: Colors.grey.shade50,
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
+            appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
           ),
           // Dark Theme
           darkTheme: ThemeData(
@@ -99,20 +172,7 @@ class SmartStudentCompanionApp extends StatelessWidget {
             ),
           ),
           home: _getInitialScreen(),
-          routes: {
-            '/splash': (context) => const SplashScreen(),
-            '/login': (context) => const LoginScreen(),
-            '/register': (context) => const RegistrationScreen(),
-            '/dashboard': (context) => const DashboardScreen(),
-            '/profile': (context) => const ProfileScreen(),
-            '/attendance': (context) => const AttendanceScreen(),
-            '/timetable': (context) => const TimetableScreen(),
-            '/assignments': (context) => const AssignmentsScreen(),
-            '/notifications': (context) => const NotificationsScreen(),
-            '/faculty': (context) => const FacultyScreen(),
-            '/events': (context) => const EventGalleryScreen(),
-            '/settings': (context) => const SettingsScreen(),
-          },
+          onGenerateRoute: onGenerateRoute,
         );
       },
     );

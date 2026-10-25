@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
-import 'dashboard_screen.dart';
-import 'registration_screen.dart';
+import '../services/preferences_service.dart';
 
-/// Login Screen: Form with validation, password visibility toggle, and authentication flow.
+/// Login Screen: Form with validation, password visibility toggle, and persistent authentication flow.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,7 +13,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _idController = TextEditingController(text: '24AIML062');
+  final _idController = TextEditingController(
+    text: 'rahul.patel@charusat.edu.in',
+  );
   final _passwordController = TextEditingController(text: 'student@123');
 
   bool _obscurePassword = true;
@@ -28,34 +29,44 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate authentication
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
+      final emailOrId = _idController.text.trim();
+      final password = _passwordController.text;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 10),
-                Text('Login Successful! Welcome Parita Shah.'),
-              ],
-            ),
-            backgroundColor: Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
+      // Persist session if rememberMe is enabled
+      if (_rememberMe) {
+        await PreferencesService.login(
+          email: emailOrId.contains('@')
+              ? emailOrId
+              : '$emailOrId@charusat.edu.in',
+          password: password,
+          name: emailOrId.toLowerCase().contains('rahul')
+              ? 'Rahul Patel'
+              : 'Parita Shah',
+        );
+      }
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 10),
+              Text('Login Successful! Welcome ${PreferencesService.userName}.'),
+            ],
           ),
-        );
+          backgroundColor: const Color(0xFF2E7D32),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
-      });
+      Navigator.pushReplacementNamed(context, '/dashboard');
     }
   }
 
@@ -228,12 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegistrationScreen(),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/register');
                         },
                         child: Text(
                           'Register Here',

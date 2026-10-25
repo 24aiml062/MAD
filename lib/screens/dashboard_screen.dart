@@ -1,19 +1,101 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../widgets/dashboard_card.dart';
+import '../widgets/app_drawer.dart';
+import '../services/preferences_service.dart';
 import '../dart_concepts.dart';
-import 'attendance_screen.dart';
-import 'timetable_screen.dart';
-import 'assignments_screen.dart';
-import 'notifications_screen.dart';
-import 'faculty_screen.dart';
-import 'event_gallery_screen.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
 
-/// Dashboard Screen: Central responsive hub presenting student metrics, attendance, and academic feature modules.
-class DashboardScreen extends StatelessWidget {
+/// Dashboard Screen: Central responsive hub presenting student metrics, attendance,
+/// persistent preferences, BottomNavigationBar, and AppDrawer navigation.
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _bottomNavIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    final openDrawerParam = Uri.base.queryParameters['drawer'] == 'true';
+    final openLogoutParam = Uri.base.queryParameters['logout'] == 'true';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (openDrawerParam) {
+        _scaffoldKey.currentState?.openDrawer();
+      } else if (openLogoutParam) {
+        _showLogoutDialog(context);
+      }
+    });
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Colors.redAccent),
+            SizedBox(width: 10),
+            Text('Confirm Logout'),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to end your current session? Your persistent session will be cleared from SharedPreferences.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await PreferencesService.logout();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onBottomNavTapped(int index) {
+    setState(() => _bottomNavIndex = index);
+    switch (index) {
+      case 0:
+        // Already on home / dashboard
+        break;
+      case 1:
+        Navigator.pushNamed(context, '/attendance');
+        break;
+      case 2:
+        Navigator.pushNamed(context, '/timetable');
+        break;
+      case 3:
+        Navigator.pushNamed(context, '/assignments');
+        break;
+      case 4:
+        Navigator.pushNamed(context, '/profile');
+        break;
+    }
+  }
 
   void _showModuleDialog(
     BuildContext context,
@@ -44,10 +126,14 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const student = StudentModel.currentStudent;
+    final currentUserName = PreferencesService.userName;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: theme.scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/dashboard'),
       appBar: AppBar(
         title: const Text(
           'Student Dashboard',
@@ -60,12 +146,9 @@ class DashboardScreen extends StatelessWidget {
           // Settings Action
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 24),
-            tooltip: 'Settings & Preferences',
+            tooltip: 'Settings & Persistent Preferences',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
+              Navigator.pushNamed(context, '/settings');
             },
           ),
           // Notification Bell with Unread Badge (Stack widget)
@@ -76,12 +159,7 @@ class DashboardScreen extends StatelessWidget {
                 icon: const Icon(Icons.notifications_outlined, size: 26),
                 tooltip: 'Notifications',
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const NotificationsScreen(),
-                    ),
-                  );
+                  Navigator.pushNamed(context, '/notifications');
                 },
               ),
               Positioned(
@@ -105,18 +183,40 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
-          // Student Profile Action
-          IconButton(
-            icon: const Icon(Icons.account_circle, size: 28),
-            tooltip: 'My Profile',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
+          const SizedBox(width: 8),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _bottomNavIndex,
+        onTap: _onBottomNavTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: isDark ? Colors.white60 : Colors.grey.shade600,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        elevation: 8,
+        selectedFontSize: 12,
+        unselectedFontSize: 11,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Home',
           ),
-          const SizedBox(width: 6),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.how_to_reg_rounded),
+            label: 'Attendance',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_rounded),
+            label: 'Timetable',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_rounded),
+            label: 'Tasks',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
       body: LayoutBuilder(
@@ -131,93 +231,106 @@ class DashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Student Overview Header Card
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/profile'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.primaryColor,
-                          theme.primaryColor.withValues(alpha: 0.85),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: Colors.white,
-                          child: Text(
-                            'PS',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: theme.primaryColor,
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.primaryColor,
+                            theme.primaryColor.withValues(alpha: 0.85),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: Colors.white,
+                            child: Text(
+                              currentUserName.isNotEmpty
+                                  ? currentUserName
+                                        .split(' ')
+                                        .take(2)
+                                        .map((e) => e.isNotEmpty ? e[0] : '')
+                                        .join()
+                                        .toUpperCase()
+                                  : 'PS',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: theme.primaryColor,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                student.name,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  currentUserName.isNotEmpty
+                                      ? currentUserName
+                                      : student.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Roll No: ${student.enrollmentNo}  |  ${student.semester}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white70,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Roll No: ${student.enrollmentNo}  |  ${student.semester}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white70,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.verified,
-                                      size: 14,
-                                      color: Colors.greenAccent,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Attendance: ${student.attendancePercentage.toInt()}% (Eligible)',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.verified,
+                                        size: 14,
+                                        color: Colors.greenAccent,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Attendance: ${student.attendancePercentage.toInt()}% (Eligible)',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -292,14 +405,7 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.how_to_reg,
                       primaryColor: Colors.teal,
                       badgeText: '91%',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AttendanceScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/attendance'),
                     ),
                     DashboardCard(
                       title: 'Timetable',
@@ -307,14 +413,7 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.schedule,
                       primaryColor: Colors.indigo,
                       badgeText: 'Today',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TimetableScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/timetable'),
                     ),
                     DashboardCard(
                       title: 'Assignments',
@@ -322,14 +421,7 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.assignment,
                       primaryColor: Colors.deepOrange,
                       badgeText: '3 Due',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AssignmentsScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/assignments'),
                     ),
                     DashboardCard(
                       title: 'Notifications',
@@ -337,14 +429,8 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.notifications,
                       primaryColor: Colors.amber.shade800,
                       badgeText: 'Alert',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NotificationsScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/notifications'),
                     ),
                     DashboardCard(
                       title: 'Faculty Info',
@@ -352,14 +438,7 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.badge,
                       primaryColor: Colors.cyan.shade800,
                       badgeText: 'Directory',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const FacultyScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/faculty'),
                     ),
                     DashboardCard(
                       title: 'Event Gallery',
@@ -367,29 +446,15 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.photo_library,
                       primaryColor: Colors.pink,
                       badgeText: 'Events',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EventGalleryScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/events'),
                     ),
                     DashboardCard(
-                      title: 'Settings (P4)',
-                      subtitle: 'State Management Lab',
+                      title: 'Settings & Storage',
+                      subtitle: 'Preferences & SharedPreferences',
                       icon: Icons.tune,
                       primaryColor: Colors.deepPurple,
-                      badgeText: 'setState',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsScreen(),
-                          ),
-                        );
-                      },
+                      badgeText: 'P5 Prefs',
+                      onTap: () => Navigator.pushNamed(context, '/settings'),
                     ),
                     DashboardCard(
                       title: 'Dart Lab Concepts',
