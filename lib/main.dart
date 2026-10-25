@@ -17,6 +17,7 @@ import 'screens/notes_tasks_screen.dart';
 import 'screens/live_notices_screen.dart';
 import 'screens/ai_assistant_screen.dart';
 import 'screens/performance_dashboard_screen.dart';
+import 'screens/deployment_readiness_screen.dart';
 import 'services/error_logging_service.dart';
 
 void main() async {
@@ -92,6 +93,12 @@ class SmartStudentCompanionApp extends StatelessWidget {
         return const PerformanceDashboardScreen(initialTabIndex: 2);
       case 'performance_error':
         return const PerformanceDashboardScreen(simulateError: true);
+      case 'deployment':
+        return const DeploymentReadinessScreen();
+      case 'deployment_checklist':
+        return const DeploymentReadinessScreen(initialTabIndex: 1);
+      case 'deployment_cicd':
+        return const DeploymentReadinessScreen(initialTabIndex: 2);
       default:
         return const SplashScreen();
     }
@@ -148,6 +155,9 @@ class SmartStudentCompanionApp extends StatelessWidget {
         break;
       case '/performance_dashboard':
         page = const PerformanceDashboardScreen();
+        break;
+      case '/deployment_readiness':
+        page = const DeploymentReadinessScreen();
         break;
       default:
         page = const SplashScreen();

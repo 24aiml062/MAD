@@ -1,0 +1,67 @@
+name: Production Build & Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build, Test & Sign Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Project Dependencies
+        run: flutter pub get
+
+      - name: Static Code Analysis (Linter & Type Checking)
+        run: dart analyze .
+
+      - name: Run Automated Test Suite
+        run: flutter test --coverage
+
+      - name: Configure Production Signing Keystore
+        run: |
+          cd android
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD || 'charusat2026' }}" > key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD || 'charusat2026' }}" >> key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS || 'upload' }}" >> key.properties
+          echo "storeFile=upload-keystore.jks" >> key.properties
+
+      - name: Build Production Signed APK
+        run: flutter build apk --release
+
+      - name: Build Production Android App Bundle (AAB for Google Play Store)
+        run: flutter build appbundle --release
+
+      - name: Upload Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-student-companion-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: ignore
+
+      - name: Upload Release AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-student-companion-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: ignore

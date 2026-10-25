@@ -182,6 +182,12 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.rocket_launch_rounded,
+                  title: 'Production Deploy (P10)',
+                  route: '/deployment_readiness',
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.storage_rounded,
                   title: 'Notes & Tasks (SQLite)',
                   route: '/notes_tasks',

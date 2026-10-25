@@ -18,6 +18,7 @@ import 'package:smart_student_companion/screens/notes_tasks_screen.dart';
 import 'package:smart_student_companion/screens/live_notices_screen.dart';
 import 'package:smart_student_companion/screens/ai_assistant_screen.dart';
 import 'package:smart_student_companion/screens/performance_dashboard_screen.dart';
+import 'package:smart_student_companion/screens/deployment_readiness_screen.dart';
 import 'package:smart_student_companion/services/performance_monitor_service.dart';
 import 'package:smart_student_companion/services/error_logging_service.dart';
 import 'package:smart_student_companion/services/ai_assistant_service.dart';
@@ -520,6 +521,51 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Global Error Boundary Active'), findsOneWidget);
       expect(find.text('Recover & Return to Diagnostics'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'DeploymentReadinessScreen renders release specs, checklist, and CI/CD pipeline',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        const MaterialApp(home: DeploymentReadinessScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Production Build & Deployment'), findsOneWidget);
+      expect(find.text('Smart Student Companion v1.0.0'), findsOneWidget);
+      expect(find.text('Production Keystore Specifications'), findsOneWidget);
+      expect(
+        find.text('Artifact Comparison: APK vs. Android App Bundle (AAB)'),
+        findsOneWidget,
+      );
+
+      // Verify Readiness Action Dialog
+      await tester.tap(find.byIcon(Icons.check_circle_outline));
+      await tester.pumpAndSettle();
+      expect(find.text('Deployment Ready!'), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      // Switch to Play Checklist Tab
+      await tester.tap(find.text('Play Checklist'));
+      await tester.pumpAndSettle();
+      expect(find.text('Production Keystore Generated'), findsOneWidget);
+      expect(find.text('Release Signing Configured'), findsOneWidget);
+
+      // Switch to CI/CD Pipeline Tab
+      await tester.tap(find.text('CI/CD Pipeline'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('GitHub Actions Automated CI/CD Pipeline'),
+        findsOneWidget,
+      );
+      expect(find.text('Source Checkout'), findsOneWidget);
+      expect(find.text('Build Signed APK & AAB'), findsOneWidget);
     },
   );
 }

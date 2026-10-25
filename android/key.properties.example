@@ -1,0 +1,6 @@
+# Example Android Release Signing Properties Template
+# For production releases, generate your keystore and set credentials here or in CI/CD secrets.
+storePassword=charusat2026
+keyPassword=charusat2026
+keyAlias=upload
+storeFile=upload-keystore.jks

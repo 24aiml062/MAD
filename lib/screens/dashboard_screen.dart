@@ -486,6 +486,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     DashboardCard(
+                      title: 'Production Deploy (P10)',
+                      subtitle: 'Keystore, CI/CD & Signed AAB',
+                      icon: Icons.rocket_launch_rounded,
+                      primaryColor: Colors.teal.shade800,
+                      badgeText: 'Release P10',
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/deployment_readiness'),
+                    ),
+                    DashboardCard(
                       title: 'Settings & Storage',
                       subtitle: 'Preferences & SharedPreferences',
                       icon: Icons.tune,
