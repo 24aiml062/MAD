@@ -573,7 +573,8 @@ class _NotesTasksScreenState extends State<NotesTasksScreen>
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _subjects.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, idx) {
                     final sub = _subjects[idx];
                     final isSelected = _notesSubjectFilter == sub;
@@ -831,7 +832,8 @@ class _NotesTasksScreenState extends State<NotesTasksScreen>
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _priorities.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 6),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 6),
                         itemBuilder: (context, idx) {
                           final pri = _priorities[idx];
                           final isSel = _tasksPriorityFilter == pri;
@@ -869,7 +871,8 @@ class _NotesTasksScreenState extends State<NotesTasksScreen>
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _statuses.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 6),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 6),
                         itemBuilder: (context, idx) {
                           final st = _statuses[idx];
                           final isSel = _tasksStatusFilter == st;

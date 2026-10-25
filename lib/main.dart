@@ -14,6 +14,7 @@ import 'screens/faculty_screen.dart';
 import 'screens/event_gallery_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/notes_tasks_screen.dart';
+import 'screens/live_notices_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,12 @@ class SmartStudentCompanionApp extends StatelessWidget {
         return const SettingsScreen();
       case 'notes_tasks':
         return const NotesTasksScreen();
+      case 'live_notices':
+        return const LiveNoticesScreen();
+      case 'live_notices_post':
+        return const LiveNoticesScreen(initialTabIndex: 1);
+      case 'live_notices_dialog':
+        return const LiveNoticesScreen(initialTabIndex: 1, autoSubmit: true);
       default:
         return const SplashScreen();
     }
@@ -106,6 +113,9 @@ class SmartStudentCompanionApp extends StatelessWidget {
         break;
       case '/notes_tasks':
         page = const NotesTasksScreen();
+        break;
+      case '/live_notices':
+        page = const LiveNoticesScreen();
         break;
       default:
         page = const SplashScreen();

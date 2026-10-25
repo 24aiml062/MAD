@@ -15,6 +15,9 @@ import 'package:smart_student_companion/screens/faculty_screen.dart';
 import 'package:smart_student_companion/screens/event_gallery_screen.dart';
 import 'package:smart_student_companion/screens/settings_screen.dart';
 import 'package:smart_student_companion/screens/notes_tasks_screen.dart';
+import 'package:smart_student_companion/screens/live_notices_screen.dart';
+import 'package:smart_student_companion/services/api_service.dart';
+import 'package:smart_student_companion/models/academic_notice.dart';
 import 'package:smart_student_companion/services/database_helper.dart';
 import 'package:smart_student_companion/models/student_note.dart';
 import 'package:smart_student_companion/models/task_item.dart';
@@ -305,6 +308,52 @@ void main() {
         searchQuery: 'Test SQLite Task',
       );
       expect(remainingTasks.isEmpty, isTrue);
+    },
+  );
+
+  testWidgets(
+    'Live Notices Screen renders REST API notices, tabs, and filters',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(const MaterialApp(home: LiveNoticesScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('University Notices (REST API)'), findsOneWidget);
+      expect(find.text('Live Notices (GET)'), findsOneWidget);
+      expect(find.text('Submit Inquiry (POST)'), findsOneWidget);
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Exam'), findsOneWidget);
+
+      // Switch to Submit Inquiry Tab
+      await tester.tap(find.text('Submit Inquiry (POST)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Submit Academic Inquiry / Feedback'), findsOneWidget);
+      expect(find.text('Send via REST POST Request'), findsOneWidget);
+    },
+  );
+
+  test(
+    'ApiService fetches notices and submits POST feedback successfully',
+    () async {
+      final notices = await ApiService.getAcademicNotices();
+      expect(notices.isNotEmpty, isTrue);
+      expect(notices.first.id, isPositive);
+      expect(notices.first.title.isNotEmpty, isTrue);
+      expect(notices.first.category.isNotEmpty, isTrue);
+
+      final postResult = await ApiService.submitFeedback(
+        const StudentFeedbackSubmission(
+          studentName: 'Parita Shah',
+          email: '24aiml062@charusat.edu.in',
+          category: 'Lab Support',
+          message: 'Practical 7 REST API submission testing.',
+        ),
+      );
+      expect(postResult['id'], isNotNull);
     },
   );
 }

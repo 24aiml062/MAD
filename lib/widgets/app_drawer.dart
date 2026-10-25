@@ -164,6 +164,12 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.public_rounded,
+                  title: 'Live Notices (REST API)',
+                  route: '/live_notices',
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.storage_rounded,
                   title: 'Notes & Tasks (SQLite)',
                   route: '/notes_tasks',

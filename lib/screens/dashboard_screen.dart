@@ -457,6 +457,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onTap: () => Navigator.pushNamed(context, '/notes_tasks'),
                     ),
                     DashboardCard(
+                      title: 'Live Notices (P7)',
+                      subtitle: 'RESTful API Integration',
+                      icon: Icons.public_rounded,
+                      primaryColor: Colors.blue.shade800,
+                      badgeText: 'REST API',
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/live_notices'),
+                    ),
+                    DashboardCard(
                       title: 'Settings & Storage',
                       subtitle: 'Preferences & SharedPreferences',
                       icon: Icons.tune,
