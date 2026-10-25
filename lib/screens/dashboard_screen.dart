@@ -89,7 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Navigator.pushNamed(context, '/timetable');
         break;
       case 3:
-        Navigator.pushNamed(context, '/assignments');
+        Navigator.pushNamed(context, '/notes_tasks');
         break;
       case 4:
         Navigator.pushNamed(context, '/profile');
@@ -447,6 +447,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       primaryColor: Colors.pink,
                       badgeText: 'Events',
                       onTap: () => Navigator.pushNamed(context, '/events'),
+                    ),
+                    DashboardCard(
+                      title: 'Notes & Tasks (P6)',
+                      subtitle: 'Offline SQLite Database CRUD',
+                      icon: Icons.storage_rounded,
+                      primaryColor: Colors.teal.shade700,
+                      badgeText: 'SQLite DB',
+                      onTap: () => Navigator.pushNamed(context, '/notes_tasks'),
                     ),
                     DashboardCard(
                       title: 'Settings & Storage',

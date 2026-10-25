@@ -14,6 +14,10 @@ import 'package:smart_student_companion/screens/notifications_screen.dart';
 import 'package:smart_student_companion/screens/faculty_screen.dart';
 import 'package:smart_student_companion/screens/event_gallery_screen.dart';
 import 'package:smart_student_companion/screens/settings_screen.dart';
+import 'package:smart_student_companion/screens/notes_tasks_screen.dart';
+import 'package:smart_student_companion/services/database_helper.dart';
+import 'package:smart_student_companion/models/student_note.dart';
+import 'package:smart_student_companion/models/task_item.dart';
 
 void main() {
   setUp(() {
@@ -216,6 +220,91 @@ void main() {
       // Test Logout
       await PreferencesService.logout();
       expect(PreferencesService.isLoggedIn, isFalse);
+    },
+  );
+
+  testWidgets('Notes & Tasks Screen renders tabs, notes, and task lists', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(const MaterialApp(home: NotesTasksScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notes & Tasks (SQLite DB)'), findsOneWidget);
+    expect(find.text('Student Notes'), findsOneWidget);
+    expect(find.text('Task Manager'), findsOneWidget);
+    expect(find.text('Flutter Widgets'), findsOneWidget);
+
+    // Switch to Task Manager Tab
+    await tester.tap(find.text('Task Manager'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Submit Flutter Assignment'), findsOneWidget);
+    expect(find.text('Prepare DBMS Practical'), findsOneWidget);
+  });
+
+  test(
+    'DatabaseHelper performs full CRUD operations on notes and tasks',
+    () async {
+      final dbHelper = DatabaseHelper.instance;
+
+      // 1. CREATE Note
+      final noteId = await dbHelper.insertNote(
+        const StudentNote(
+          title: 'Test SQLite Note',
+          description: 'Verifying automated CRUD operations.',
+          subject: 'Mobile Application Development',
+          createdDate: '2026-10-25',
+        ),
+      );
+      expect(noteId, isPositive);
+
+      // 2. READ Note
+      final notes = await dbHelper.getAllNotes(searchQuery: 'Test SQLite Note');
+      expect(notes.any((n) => n.title == 'Test SQLite Note'), isTrue);
+
+      // 3. UPDATE Note
+      final noteToUpdate = notes.firstWhere(
+        (n) => n.title == 'Test SQLite Note',
+      );
+      await dbHelper.updateNote(
+        noteToUpdate.copyWith(title: 'Updated SQLite Note'),
+      );
+      final updatedNotes = await dbHelper.getAllNotes(
+        searchQuery: 'Updated SQLite Note',
+      );
+      expect(updatedNotes.any((n) => n.title == 'Updated SQLite Note'), isTrue);
+
+      // 4. DELETE Note
+      await dbHelper.deleteNote(noteToUpdate.id!);
+      final remainingNotes = await dbHelper.getAllNotes(
+        searchQuery: 'Updated SQLite Note',
+      );
+      expect(remainingNotes.isEmpty, isTrue);
+
+      // 5. TASK CRUD
+      final taskId = await dbHelper.insertTask(
+        const TaskItem(
+          taskName: 'Test SQLite Task',
+          dueDate: 'Tomorrow',
+          priority: 'High',
+          status: 'Pending',
+        ),
+      );
+      expect(taskId, isPositive);
+
+      await dbHelper.toggleTaskStatus(taskId, true);
+      final tasks = await dbHelper.getAllTasks(searchQuery: 'Test SQLite Task');
+      expect(tasks.first.status, equals('Completed'));
+
+      await dbHelper.deleteTask(taskId);
+      final remainingTasks = await dbHelper.getAllTasks(
+        searchQuery: 'Test SQLite Task',
+      );
+      expect(remainingTasks.isEmpty, isTrue);
     },
   );
 }

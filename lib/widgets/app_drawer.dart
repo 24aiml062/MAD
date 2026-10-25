@@ -164,6 +164,12 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.storage_rounded,
+                  title: 'Notes & Tasks (SQLite)',
+                  route: '/notes_tasks',
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.settings_outlined,
                   title: 'Settings & Storage',
                   route: '/settings',
