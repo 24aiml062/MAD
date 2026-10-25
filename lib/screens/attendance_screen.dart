@@ -12,7 +12,10 @@ class AttendanceScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance Summary', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Attendance Summary',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -24,7 +27,9 @@ class AttendanceScreen extends StatelessWidget {
             // Overall Attendance Hero Card
             Card(
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -47,7 +52,9 @@ class AttendanceScreen extends StatelessWidget {
                             value: 0.91,
                             strokeWidth: 8,
                             backgroundColor: Colors.white24,
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.greenAccent,
+                            ),
                           ),
                         ),
                         const Column(
@@ -63,7 +70,10 @@ class AttendanceScreen extends StatelessWidget {
                             ),
                             Text(
                               'Total',
-                              style: TextStyle(fontSize: 10, color: Colors.white70),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white70,
+                              ),
                             ),
                           ],
                         ),
@@ -85,7 +95,10 @@ class AttendanceScreen extends StatelessWidget {
                           SizedBox(height: 4),
                           Text(
                             '139 of 152 Lectures Attended',
-                            style: TextStyle(fontSize: 13, color: Colors.white70),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
                           ),
                           SizedBox(height: 6),
                           Text(
@@ -133,15 +146,18 @@ class AttendanceScreen extends StatelessWidget {
                   mainAxisSpacing: 12,
                 ),
                 itemCount: AttendanceItem.sampleAttendance.length,
-                itemBuilder: (context, idx) => _buildSubjectCard(AttendanceItem.sampleAttendance[idx]),
+                itemBuilder: (context, idx) =>
+                    _buildSubjectCard(AttendanceItem.sampleAttendance[idx]),
               )
             else
               Column(
                 children: AttendanceItem.sampleAttendance
-                    .map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSubjectCard(item),
-                        ))
+                    .map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildSubjectCard(item),
+                      ),
+                    )
                     .toList(),
               ),
           ],
@@ -179,14 +195,20 @@ class AttendanceScreen extends StatelessWidget {
                         item.subjectName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: item.color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),

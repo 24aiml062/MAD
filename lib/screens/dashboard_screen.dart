@@ -9,6 +9,7 @@ import 'notifications_screen.dart';
 import 'faculty_screen.dart';
 import 'event_gallery_screen.dart';
 import 'profile_screen.dart';
+import 'settings_screen.dart';
 
 /// Dashboard Screen: Central responsive hub presenting student metrics, attendance, and academic feature modules.
 class DashboardScreen extends StatelessWidget {
@@ -46,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Student Dashboard',
@@ -56,6 +57,17 @@ class DashboardScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
+          // Settings Action
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, size: 24),
+            tooltip: 'Settings & Preferences',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
           // Notification Bell with Unread Badge (Stack widget)
           Stack(
             alignment: Alignment.center,
@@ -109,7 +121,6 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive crossAxisCount based on screen width
           final isTabletOrDesktop = constraints.maxWidth >= 650;
           final int gridColumns = isTabletOrDesktop ? 4 : 2;
           final double gridAspectRatio = isTabletOrDesktop ? 1.25 : 1.15;
@@ -220,6 +231,7 @@ class DashboardScreen extends StatelessWidget {
                       '8.75',
                       Icons.grade,
                       Colors.amber.shade700,
+                      context,
                     ),
                     const SizedBox(width: 10),
                     _buildQuickStat(
@@ -227,6 +239,7 @@ class DashboardScreen extends StatelessWidget {
                       '4 Enrolled',
                       Icons.book_outlined,
                       Colors.blue,
+                      context,
                     ),
                     const SizedBox(width: 10),
                     _buildQuickStat(
@@ -234,6 +247,7 @@ class DashboardScreen extends StatelessWidget {
                       '3 Pending',
                       Icons.task_alt,
                       Colors.deepOrange,
+                      context,
                     ),
                   ],
                 ),
@@ -248,7 +262,7 @@ class DashboardScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     Text(
@@ -363,15 +377,16 @@ class DashboardScreen extends StatelessWidget {
                       },
                     ),
                     DashboardCard(
-                      title: 'Student Profile',
-                      subtitle: 'View Academic Record',
-                      icon: Icons.person_search,
-                      primaryColor: Colors.blueGrey,
+                      title: 'Settings (P4)',
+                      subtitle: 'State Management Lab',
+                      icon: Icons.tune,
+                      primaryColor: Colors.deepPurple,
+                      badgeText: 'setState',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ProfileScreen(),
+                            builder: (context) => const SettingsScreen(),
                           ),
                         );
                       },
@@ -406,14 +421,20 @@ class DashboardScreen extends StatelessWidget {
     String value,
     IconData icon,
     Color color,
+    BuildContext context,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
