@@ -176,6 +176,12 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.speed_rounded,
+                  title: 'Diagnostics & Testing (P9)',
+                  route: '/performance_dashboard',
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.storage_rounded,
                   title: 'Notes & Tasks (SQLite)',
                   route: '/notes_tasks',

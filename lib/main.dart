@@ -16,9 +16,12 @@ import 'screens/settings_screen.dart';
 import 'screens/notes_tasks_screen.dart';
 import 'screens/live_notices_screen.dart';
 import 'screens/ai_assistant_screen.dart';
+import 'screens/performance_dashboard_screen.dart';
+import 'services/error_logging_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ErrorLoggingService().init();
   await PreferencesService.init();
 
   final darkParam = Uri.base.queryParameters['dark'] == 'true';
@@ -81,6 +84,14 @@ class SmartStudentCompanionApp extends StatelessWidget {
         );
       case 'ai_assistant_specs':
         return const AiAssistantScreen(autoOpenSpecs: true);
+      case 'performance':
+        return const PerformanceDashboardScreen();
+      case 'performance_tests':
+        return const PerformanceDashboardScreen(initialTabIndex: 1);
+      case 'performance_devtools':
+        return const PerformanceDashboardScreen(initialTabIndex: 2);
+      case 'performance_error':
+        return const PerformanceDashboardScreen(simulateError: true);
       default:
         return const SplashScreen();
     }
@@ -134,6 +145,9 @@ class SmartStudentCompanionApp extends StatelessWidget {
         break;
       case '/ai_assistant':
         page = const AiAssistantScreen();
+        break;
+      case '/performance_dashboard':
+        page = const PerformanceDashboardScreen();
         break;
       default:
         page = const SplashScreen();

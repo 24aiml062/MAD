@@ -475,6 +475,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.pushNamed(context, '/ai_assistant'),
                     ),
                     DashboardCard(
+                      title: 'Optimization & Tests (P9)',
+                      subtitle: 'DevTools, Profiling & 20 TCs',
+                      icon: Icons.speed_rounded,
+                      primaryColor: Colors.indigo.shade800,
+                      badgeText: 'DevTools P9',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        '/performance_dashboard',
+                      ),
+                    ),
+                    DashboardCard(
                       title: 'Settings & Storage',
                       subtitle: 'Preferences & SharedPreferences',
                       icon: Icons.tune,

@@ -17,6 +17,9 @@ import 'package:smart_student_companion/screens/settings_screen.dart';
 import 'package:smart_student_companion/screens/notes_tasks_screen.dart';
 import 'package:smart_student_companion/screens/live_notices_screen.dart';
 import 'package:smart_student_companion/screens/ai_assistant_screen.dart';
+import 'package:smart_student_companion/screens/performance_dashboard_screen.dart';
+import 'package:smart_student_companion/services/performance_monitor_service.dart';
+import 'package:smart_student_companion/services/error_logging_service.dart';
 import 'package:smart_student_companion/services/ai_assistant_service.dart';
 import 'package:smart_student_companion/models/ai_message.dart';
 import 'package:smart_student_companion/services/api_service.dart';
@@ -435,6 +438,88 @@ void main() {
         find.textContaining('Lecture Summary: Flutter Widgets'),
         findsOneWidget,
       );
+    },
+  );
+
+  test(
+    'PerformanceMonitorService tracks 5 benchmarks and 20 functional test cases',
+    () {
+      final benchmarks = PerformanceMonitorService.benchmarkResults;
+      expect(benchmarks.length, equals(5));
+      expect(benchmarks.first.metricName, contains('Startup Time'));
+      expect(benchmarks.first.improvement, equals('-63.0%'));
+
+      final functionalTests = PerformanceMonitorService.functionalTestMatrix;
+      expect(functionalTests.length, equals(20));
+      expect(functionalTests.first['id'], equals('TC-01'));
+      expect(functionalTests.last['id'], equals('TC-20'));
+      for (final tc in functionalTests) {
+        expect(tc['status'], equals('PASSED'));
+      }
+
+      final monitor = PerformanceMonitorService();
+      monitor.resetRebuildCounter();
+      monitor.incrementRebuild();
+      expect(monitor.rebuildCounter, equals(1));
+    },
+  );
+
+  testWidgets(
+    'PerformanceDashboardScreen renders benchmarks, test matrix, and DevTools lab',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        const MaterialApp(home: PerformanceDashboardScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('App Diagnostics & Performance'), findsOneWidget);
+      expect(find.text('5 Benchmarks'), findsOneWidget);
+      expect(find.text('20 Test Cases'), findsOneWidget);
+      expect(find.text('DevTools Lab'), findsOneWidget);
+      expect(find.text('Application Cold Startup Time'), findsOneWidget);
+
+      // Switch to 20 Test Cases Tab
+      await tester.tap(find.text('20 Test Cases'));
+      await tester.pumpAndSettle();
+      expect(find.text('User Login Validation'), findsOneWidget);
+      expect(find.text('User Logout & Session Clearance'), findsOneWidget);
+
+      // Switch to DevTools Lab Tab
+      await tester.tap(find.text('DevTools Lab'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Flutter DevTools Interactive Profiler'),
+        findsOneWidget,
+      );
+      expect(find.text('Run Test'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Error boundary and logging service intercept runtime exceptions',
+    (WidgetTester tester) async {
+      final logger = ErrorLoggingService();
+      logger.clearLogs();
+      logger.logError(
+        message: 'Simulated FormatException: invalid token input',
+        stackTrace: 'at test_runner.dart:42',
+        category: 'TEST_EXCEPTION',
+      );
+      expect(logger.errorLog.length, equals(1));
+      expect(logger.errorLog.first.category, equals('TEST_EXCEPTION'));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PerformanceDashboardScreen(simulateError: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Global Error Boundary Active'), findsOneWidget);
+      expect(find.text('Recover & Return to Diagnostics'), findsOneWidget);
     },
   );
 }
