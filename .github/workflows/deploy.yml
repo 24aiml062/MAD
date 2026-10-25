@@ -25,9 +25,11 @@ jobs:
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.x'
           channel: 'stable'
           cache: true
+
+      - name: Accept Android SDK Licenses
+        run: yes | flutter doctor --android-licenses || true
 
       - name: Install Project Dependencies
         run: flutter pub get
@@ -45,6 +47,11 @@ jobs:
           echo "keyPassword=${{ secrets.KEY_PASSWORD || 'charusat2026' }}" >> key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS || 'upload' }}" >> key.properties
           echo "storeFile=upload-keystore.jks" >> key.properties
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/upload-keystore.jks
+          elif [ ! -f "app/upload-keystore.jks" ]; then
+            keytool -genkeypair -v -keystore app/upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass charusat2026 -keypass charusat2026 -dname "CN=SmartStudent, OU=AIML, O=CHARUSAT, L=Changa, ST=Gujarat, C=IN"
+          fi
 
       - name: Build Production Signed APK
         run: flutter build apk --release
