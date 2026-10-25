@@ -16,6 +16,9 @@ import 'package:smart_student_companion/screens/event_gallery_screen.dart';
 import 'package:smart_student_companion/screens/settings_screen.dart';
 import 'package:smart_student_companion/screens/notes_tasks_screen.dart';
 import 'package:smart_student_companion/screens/live_notices_screen.dart';
+import 'package:smart_student_companion/screens/ai_assistant_screen.dart';
+import 'package:smart_student_companion/services/ai_assistant_service.dart';
+import 'package:smart_student_companion/models/ai_message.dart';
 import 'package:smart_student_companion/services/api_service.dart';
 import 'package:smart_student_companion/models/academic_notice.dart';
 import 'package:smart_student_companion/services/database_helper.dart';
@@ -354,6 +357,84 @@ void main() {
         ),
       );
       expect(postResult['id'], isNotNull);
+    },
+  );
+
+  test(
+    'AiAssistantService generates summaries, study plans, and translations',
+    () async {
+      final aiService = AiAssistantService();
+
+      // 1. Lecture Notes Summarization
+      final summary = await aiService.generateResponse(
+        prompt: 'Summarize today\'s lecture on Flutter Widgets',
+        category: AiPromptCategory.summarize,
+      );
+      expect(summary.text, contains('Lecture Summary: Flutter Widgets'));
+      expect(summary.isOffline, isTrue);
+      expect(summary.processingTimeMs, isPositive);
+
+      // 2. Exam Study Plan
+      final studyPlan = await aiService.generateResponse(
+        prompt: 'Generate exam study plan for AIUE302',
+        category: AiPromptCategory.studyPlan,
+      );
+      expect(studyPlan.text, contains('5-Day Exam Revision Plan'));
+
+      // 3. Multilingual Translation (Hindi/Gujarati)
+      final translation = await aiService.generateResponse(
+        prompt: 'Translate mobile AI concepts to Hindi and Gujarati',
+        category: AiPromptCategory.translate,
+      );
+      expect(translation.text, contains('Hindi (हिंदी) Translation'));
+      expect(translation.text, contains('Gujarati (ગુજરાતી) Translation'));
+
+      // 4. Academic Q&A
+      final qa = await aiService.generateResponse(
+        prompt: 'Explain Stateful vs Stateless Widget',
+        category: AiPromptCategory.qa,
+      );
+      expect(qa.text, contains('StatelessWidget'));
+      expect(qa.text, contains('StatefulWidget'));
+    },
+  );
+
+  testWidgets(
+    'AiAssistantScreen renders chat UI, prompt chips, and specs dialog',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(const MaterialApp(home: AiAssistantScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI Smart Assistant'), findsOneWidget);
+      expect(find.text('Gemini Nano • Google AI Edge SDK'), findsOneWidget);
+      expect(find.text('Summarize Notes'), findsWidgets);
+      expect(find.text('Exam Study Plan'), findsWidgets);
+
+      // Tap Specs Info Action
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pumpAndSettle();
+      expect(find.text('Gemini Nano Specs'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      // Tap Quick Action Chip to trigger inference
+      await tester.tap(find.text('Summarize Notes').first);
+      await tester.pump(); // Start processing
+      expect(
+        find.text('Gemini Nano executing local on-device inference...'),
+        findsOneWidget,
+      );
+
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+      expect(
+        find.textContaining('Lecture Summary: Flutter Widgets'),
+        findsOneWidget,
+      );
     },
   );
 }

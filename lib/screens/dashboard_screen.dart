@@ -466,6 +466,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.pushNamed(context, '/live_notices'),
                     ),
                     DashboardCard(
+                      title: 'Smart Assistant (P8)',
+                      subtitle: 'Google AI Edge & Gemini Nano',
+                      icon: Icons.smart_toy_rounded,
+                      primaryColor: Colors.deepPurple.shade700,
+                      badgeText: 'On-Device AI',
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/ai_assistant'),
+                    ),
+                    DashboardCard(
                       title: 'Settings & Storage',
                       subtitle: 'Preferences & SharedPreferences',
                       icon: Icons.tune,

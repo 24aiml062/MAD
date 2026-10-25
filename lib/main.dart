@@ -15,6 +15,7 @@ import 'screens/event_gallery_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/notes_tasks_screen.dart';
 import 'screens/live_notices_screen.dart';
+import 'screens/ai_assistant_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +67,20 @@ class SmartStudentCompanionApp extends StatelessWidget {
         return const LiveNoticesScreen(initialTabIndex: 1);
       case 'live_notices_dialog':
         return const LiveNoticesScreen(initialTabIndex: 1, autoSubmit: true);
+      case 'ai_assistant':
+        return const AiAssistantScreen();
+      case 'ai_assistant_summary':
+        return const AiAssistantScreen(
+          initialPrompt:
+              'Summarize today\'s lecture on Flutter Widgets & State Management.',
+        );
+      case 'ai_assistant_study_plan':
+        return const AiAssistantScreen(
+          initialPrompt:
+              'Generate a 5-day revision plan for AIUE302 MAD examination.',
+        );
+      case 'ai_assistant_specs':
+        return const AiAssistantScreen(autoOpenSpecs: true);
       default:
         return const SplashScreen();
     }
@@ -116,6 +131,9 @@ class SmartStudentCompanionApp extends StatelessWidget {
         break;
       case '/live_notices':
         page = const LiveNoticesScreen();
+        break;
+      case '/ai_assistant':
+        page = const AiAssistantScreen();
         break;
       default:
         page = const SplashScreen();

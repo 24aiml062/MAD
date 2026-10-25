@@ -170,6 +170,12 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.smart_toy_rounded,
+                  title: 'AI Smart Assistant (P8)',
+                  route: '/ai_assistant',
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.storage_rounded,
                   title: 'Notes & Tasks (SQLite)',
                   route: '/notes_tasks',
